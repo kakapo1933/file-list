@@ -1,4 +1,4 @@
-# File Insight (`fi`)
+# File List (`fls`)
 
 An enhanced `ls` command-line tool written in Rust that provides human-readable file information with comprehensive permission details and visual formatting.
 
@@ -36,7 +36,7 @@ An enhanced `ls` command-line tool written in Rust that provides human-readable 
 
 ```bash
 # Clone or navigate to the project directory
-cd fi
+cd file-list
 
 # Build the project
 cargo build --release
@@ -51,19 +51,19 @@ cargo install --path .
 
 ```bash
 # Basic listing (current directory)
-fi
+fls
 
 # List specific directory
-fi /path/to/directory
+fls /path/to/directory
 
 # Detailed table format with human-readable permissions
-fi -l
+fls -l
 
 # Show hidden files
-fi -a
+fls -a
 
 # Combine options (detailed view + hidden files)
-fi -la /path/to/directory
+fls -la /path/to/directory
 ```
 
 ### Command Line Options
@@ -143,7 +143,7 @@ target
 
 ## Comparison with Traditional `ls`
 
-| Feature | `ls -la` | `fi -la` |
+| Feature | `ls -la` | `fls -la` |
 |---------|----------|-------------------|
 | Permission format | `rwxr-xr-x` | `Read, Write, Execute` |
 | File type | First character | Dedicated "Type" column |

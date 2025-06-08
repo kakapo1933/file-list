@@ -29,7 +29,7 @@ struct FileInfo {
 }
 
 fn main() {
-    let matches = Command::new("fi")
+    let matches = Command::new("fls")
         .version("0.1.0")
         .about("Enhanced ls command with detailed permissions and table display")
         .arg(
