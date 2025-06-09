@@ -2,9 +2,9 @@ use chrono::{DateTime, Local};
 use clap::{Arg, Command};
 use colored::*;
 use std::fs;
-use std::os::unix::fs::{PermissionsExt, MetadataExt};
-use tabled::{Table, Tabled, settings::Style};
-use users::{get_user_by_uid, get_group_by_gid};
+use std::os::unix::fs::{MetadataExt, PermissionsExt};
+use tabled::{settings::Style, Table, Tabled};
+use users::{get_group_by_gid, get_user_by_uid};
 
 #[derive(Tabled)]
 struct FileInfo {
@@ -127,7 +127,7 @@ fn display_table_format(entries: &[Result<fs::DirEntry, std::io::Error>], show_h
         };
 
         let file_info = FileInfo {
-            name: file_name_str.to_string(),  // Use plain text for proper alignment
+            name: file_name_str.to_string(), // Use plain text for proper alignment
             file_type: get_file_type(&metadata),
             user_perms: get_user_permissions(&metadata),
             group_perms: get_group_permissions(&metadata),
@@ -142,12 +142,14 @@ fn display_table_format(entries: &[Result<fs::DirEntry, std::io::Error>], show_h
     }
 
     if !file_infos.is_empty() {
-        let table = Table::new(file_infos)
-            .with(Style::modern())
-            .to_string();
-        
-        
+        let table = Table::new(file_infos).with(Style::modern()).to_string();
+
         // Apply colors after table is formatted
+        // Why colors are applied after table creation:
+        // The tabled crate calculates column widths based on string length.
+        // ANSI escape codes (like \x1b[34m for blue) are invisible but count as characters,
+        // which would break column alignment if included in the FileInfo struct.
+        // Solution: Create table with plain text first, then replace filenames with colored versions.
         let colored_output = apply_colors_to_table(&table, &entries, show_hidden);
         println!("{}", colored_output);
     }
@@ -223,15 +225,15 @@ fn format_octal_permissions(metadata: &fs::Metadata) -> String {
 fn get_owner_info(metadata: &fs::Metadata) -> String {
     let uid = metadata.uid();
     let gid = metadata.gid();
-    
+
     let user_name = get_user_by_uid(uid)
         .map(|user| user.name().to_string_lossy().to_string())
         .unwrap_or_else(|| uid.to_string());
-    
+
     let group_name = get_group_by_gid(gid)
         .map(|group| group.name().to_string_lossy().to_string())
         .unwrap_or_else(|| gid.to_string());
-    
+
     format!("{}/{}", user_name, group_name)
 }
 
@@ -244,6 +246,27 @@ fn format_size(size: u64) -> String {
         format!("{:.1}M", size as f64 / (1024.0 * 1024.0))
     } else {
         format!("{:.1}G", size as f64 / (1024.0 * 1024.0 * 1024.0))
+    }
+}
+
+fn get_colored_size_string(size_str: &str, size_bytes: u64) -> String {
+    // Color coding for file sizes:
+    // Green: < 1MB (small files)
+    // Yellow: 1MB - 100MB (medium files)
+    // Magenta: > 100MB (large files)
+    // Red: > 1GB (very large files)
+    if size_bytes >= 1024 * 1024 * 1024 {
+        // >= 1GB - Red
+        format!("{}", size_str.red().bold())
+    } else if size_bytes >= 100 * 1024 * 1024 {
+        // >= 100MB - Magenta
+        format!("{}", size_str.magenta())
+    } else if size_bytes >= 1024 * 1024 {
+        // >= 1MB - Yellow
+        format!("{}", size_str.yellow())
+    } else {
+        // < 1MB - Green
+        format!("{}", size_str.green())
     }
 }
 
@@ -275,11 +298,17 @@ fn get_file_type(metadata: &fs::Metadata) -> String {
 
 fn format_permission_group(perm: u32) -> String {
     let mut result = Vec::new();
-    
-    if perm & 4 != 0 { result.push("Read"); }
-    if perm & 2 != 0 { result.push("Write"); }
-    if perm & 1 != 0 { result.push("Execute"); }
-    
+
+    if perm & 4 != 0 {
+        result.push("Read");
+    }
+    if perm & 2 != 0 {
+        result.push("Write");
+    }
+    if perm & 1 != 0 {
+        result.push("Execute");
+    }
+
     if result.is_empty() {
         "None".to_string()
     } else {
@@ -305,39 +334,52 @@ fn get_other_permissions(metadata: &fs::Metadata) -> String {
     format_permission_group(other_perm)
 }
 
-fn apply_colors_to_table(table: &str, entries: &[Result<fs::DirEntry, std::io::Error>], show_hidden: bool) -> String {
+fn apply_colors_to_table(
+    table: &str,
+    entries: &[Result<fs::DirEntry, std::io::Error>],
+    show_hidden: bool,
+) -> String {
     let mut result = table.to_string();
-    
-    // Collect all file names and sort by length (longest first) to avoid partial replacements
+
+    // Collect all file names and sizes, sort by length (longest first) to avoid partial replacements
     let mut file_entries = Vec::new();
+    let mut size_entries = Vec::new();
+
     for entry in entries {
-        if let Ok(entry) = entry {
-            let file_name = entry.file_name();
-            let file_name_str = file_name.to_string_lossy();
-            
-            if !show_hidden && file_name_str.starts_with('.') {
-                continue;
-            }
-            
-            if let Ok(metadata) = entry.metadata() {
-                let colored_name = get_colored_name_string(&file_name_str, &metadata);
-                file_entries.push((file_name_str.to_string(), colored_name));
-            }
+        let Ok(entry) = entry else { continue };
+        let file_name = entry.file_name();
+        let file_name_str = file_name.to_string_lossy();
+
+        if !show_hidden && file_name_str.starts_with('.') {
+            continue;
+        }
+
+        if let Ok(metadata) = entry.metadata() {
+            let colored_name = get_colored_name_string(&file_name_str, &metadata);
+            file_entries.push((file_name_str.to_string(), colored_name));
+
+            // Also collect size information for coloring
+            let size = metadata.len();
+            let size_str = format_size(size);
+            let colored_size = get_colored_size_string(&size_str, size);
+            size_entries.push((size_str, colored_size));
         }
     }
-    
+
     // Sort by filename length (longest first) to avoid partial matches
     file_entries.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
-    
-    
-    // Apply replacements in order with precise matching
+
+    // Sort sizes by length too for proper replacement
+    size_entries.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
+
+    // Apply filename color replacements
     for (file_name, colored_name) in file_entries {
         let lines: Vec<&str> = result.split('\n').collect();
         let mut new_lines = Vec::new();
-        
+
         for line in lines {
             // Only replace if it's the actual filename in the first column with exact boundary
-            let filename_pattern = format!("│ {} ", file_name);  // Add space to ensure exact match
+            let filename_pattern = format!("│ {} ", file_name); // Add space to ensure exact match
             if line.contains(&filename_pattern) {
                 // Replace only the filename part
                 let new_line = line.replace(&filename_pattern, &format!("│ {} ", colored_name));
@@ -346,9 +388,42 @@ fn apply_colors_to_table(table: &str, entries: &[Result<fs::DirEntry, std::io::E
                 new_lines.push(line.to_string());
             }
         }
-        
+
         result = new_lines.join("\n");
     }
-    
+
+    // Apply size color replacements
+    for (size_str, colored_size) in size_entries {
+        let lines: Vec<&str> = result.split('\n').collect();
+        let mut new_lines = Vec::new();
+
+        for line in lines {
+            // Look for size pattern with proper boundaries (spaces or │)
+            if line.contains(&size_str) {
+                // Replace size ensuring we don't replace partial matches
+                let size_pattern = format!(" {} ", size_str);
+                let colored_pattern = format!(" {} ", colored_size);
+                if line.contains(&size_pattern) {
+                    let new_line = line.replace(&size_pattern, &colored_pattern);
+                    new_lines.push(new_line);
+                } else {
+                    // Check for size at end of cell (before │)
+                    let size_pattern_end = format!(" {} │", size_str);
+                    let colored_pattern_end = format!(" {} │", colored_size);
+                    if line.contains(&size_pattern_end) {
+                        let new_line = line.replace(&size_pattern_end, &colored_pattern_end);
+                        new_lines.push(new_line);
+                    } else {
+                        new_lines.push(line.to_string());
+                    }
+                }
+            } else {
+                new_lines.push(line.to_string());
+            }
+        }
+
+        result = new_lines.join("\n");
+    }
+
     result
 }

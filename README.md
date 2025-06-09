@@ -10,6 +10,11 @@ An enhanced `ls` command-line tool written in Rust that provides human-readable 
   - 🔵 Directories appear in blue and bold
   - 🟢 Executable files appear in green and bold
   - ⚫ Regular files appear in normal color
+- **Color-coded file sizes** for quick size assessment:
+  - 🟢 Green: < 1MB (small files)
+  - 🟡 Yellow: 1MB - 100MB (medium files)  
+  - 🟣 Magenta: 100MB - 1GB (large files)
+  - 🔴 Red (bold): > 1GB (very large files)
 - **Professional table formatting** with Unicode borders
 - **Perfect column alignment** regardless of filename length or special characters
 
@@ -96,6 +101,8 @@ target
 │ src          │ Directory  │ Read, Write, Execute │ Read, Execute    │ Read, Execute    │ 755   │ user/staff         │ 96B    │ Jun 09 02:29 │
 └──────────────┴────────────┴──────────────────────┴──────────────────┴──────────────────┴───────┴────────────────────┴────────┴──────────────┘
 ```
+
+Note: File sizes are color-coded in the terminal output - green for small files (<1MB), yellow for medium (1MB-100MB), magenta for large (100MB-1GB), and red for very large (>1GB).
 
 ### Permission Examples Explained
 
