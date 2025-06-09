@@ -30,7 +30,7 @@ struct FileInfo {
 
 fn main() {
     let matches = Command::new("fls")
-        .version("0.1.0")
+        .version(env!("CARGO_PKG_VERSION"))
         .about("Enhanced ls command with detailed permissions and table display")
         .arg(
             Arg::new("path")
