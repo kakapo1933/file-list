@@ -18,6 +18,13 @@ An enhanced `ls` command-line tool written in Rust that provides human-readable 
 - **Professional table formatting** with Unicode borders
 - **Perfect column alignment** regardless of filename length or special characters
 
+### 🖱️ **Interactive Features**
+- **Clickable file names** with OSC 8 terminal hyperlink support
+- **One-click file opening** with system default applications
+- **One-click folder navigation** in file manager
+- **Cross-platform compatibility** (macOS, Linux)
+- **Terminal support detection** for modern terminals (iTerm2, GNOME Terminal, Windows Terminal, VS Code)
+
 ### 📊 **Human-Readable Permissions**
 - **Separate permission columns** for User, Group, and Other
 - **Plain English descriptions**: "Read, Write, Execute" instead of "rwx"
@@ -69,6 +76,15 @@ fls -a
 
 # Combine options (detailed view + hidden files)
 fls -la /path/to/directory
+
+# Interactive mode (clickable file names)
+fls -i
+
+# Interactive mode with table format
+fls -li
+
+# All options combined
+fls -lai /path/to/directory
 ```
 
 ### Command Line Options
@@ -77,6 +93,7 @@ fls -la /path/to/directory
 |--------|-------|------|-------------|
 | `-l` | `-l` | `--long` | Display detailed information in table format with human-readable permissions |
 | `-a` | `-a` | `--all` | Show hidden files (files starting with `.`) |
+| `-i` | `-i` | `--interactive` | Enable clickable file names (requires terminal with OSC 8 support) |
 
 ## Examples
 
@@ -122,12 +139,33 @@ Note: File sizes are color-coded in the terminal output - green for small files 
 - **chrono**: Date and time formatting for file timestamps
 - **tabled**: Professional table formatting and display
 - **users**: User and group name resolution from system IDs
+- **open**: Cross-platform file and directory opening
+- **percent-encoding**: URL encoding for file paths in hyperlinks
 
 ### Architecture
-- **Modular design**: Separate functions for permissions, formatting, and display
+- **Modular design**: Clean separation of concerns across multiple modules
+- **Configuration management**: Type-safe configuration struct replacing multiple parameters
+- **Display abstraction**: Separate modules for simple and table formatting
+- **Color management**: Centralized color logic with terminal hyperlink support
+- **File operations**: Dedicated module for file metadata and permission handling
+- **Formatting utilities**: Reusable functions for size, time, and permission formatting
 - **Color-safe table rendering**: Colors applied after table layout calculation
 - **Robust error handling**: Graceful degradation for permission errors
 - **Cross-platform compatibility**: Works on macOS and Linux systems
+
+#### Module Structure
+```
+src/
+├── main.rs           # CLI entry point and argument parsing
+├── config.rs         # Configuration struct and CLI option management
+├── file_info.rs      # File metadata, permissions, and FileInfo struct
+├── formatting.rs     # Size, time, and permission formatting utilities
+├── colors.rs         # Color logic and terminal hyperlink generation
+└── display/
+    ├── mod.rs        # Common display logic and entry point
+    ├── simple.rs     # Simple format display implementation
+    └── table.rs      # Table format display with color application
+```
 
 ### Performance
 - **Efficient sorting**: Files sorted alphabetically for consistent output
@@ -148,20 +186,47 @@ Note: File sizes are color-coded in the terminal output - green for small files 
 - **Real ownership**: Displays actual usernames and group names
 - **Clear categorization**: Separate columns for user, group, and other permissions
 
+### Interactive Features
+- **OSC 8 hyperlinks**: Uses standard terminal escape sequences for clickable links
+- **File URL generation**: Creates proper `file://` URLs with percent-encoding for special characters
+- **Absolute path resolution**: Handles both relative and absolute paths correctly
+- **Cross-platform opening**: Uses system default applications for file/folder opening
+- **Terminal compatibility**: Works with modern terminals supporting OSC 8 sequences
+
+#### Supported Terminals
+- **iTerm2** (macOS) - Full support
+- **GNOME Terminal** (Linux) - Full support  
+- **Windows Terminal** - Full support
+- **VS Code integrated terminal** - Full support
+- **Terminal.app** (macOS) - Limited support
+- **Other terminals** - Graceful fallback (hyperlinks ignored, colors preserved)
+
 ## Comparison with Traditional `ls`
 
-| Feature | `ls -la` | `fls -la` |
-|---------|----------|-------------------|
-| Permission format | `rwxr-xr-x` | `Read, Write, Execute` |
-| File type | First character | Dedicated "Type" column |
-| Ownership | `user group` | `user/group (Owner)` |
-| Visual layout | Plain text | Professional table |
-| Color coding | Basic | Enhanced with proper alignment |
-| Learning curve | Requires Unix knowledge | Self-explanatory |
+| Feature | `ls -la` | `fls -la` | `fls -lai` |
+|---------|----------|-------------------|-----------|
+| Permission format | `rwxr-xr-x` | `Read, Write, Execute` | `Read, Write, Execute` |
+| File type | First character | Dedicated "Type" column | Dedicated "Type" column |
+| Ownership | `user group` | `user/group (Owner)` | `user/group (Owner)` |
+| Visual layout | Plain text | Professional table | Professional table |
+| Color coding | Basic | Enhanced with alignment | Enhanced with alignment |
+| Interactive files | ❌ None | ❌ None | ✅ Clickable hyperlinks |
+| File opening | Manual copy/paste | Manual copy/paste | ✅ One-click opening |
+| Learning curve | Requires Unix knowledge | Self-explanatory | Self-explanatory |
 
 ## License
 
 This project is available under the MIT License.
+
+## Extending the Tool
+
+The modular architecture makes it easy to extend `fls` with new features. See the `examples/` directory for detailed examples:
+
+- **`json_output.rs`**: Adding JSON output format
+- **`custom_colors.rs`**: Implementing configurable color schemes  
+- **`plugin_system.rs`**: Creating a plugin system for custom file information
+
+For detailed development information, see [`DEVELOPER.md`](DEVELOPER.md).
 
 ## Contributing
 
