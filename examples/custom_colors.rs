@@ -3,7 +3,6 @@
 //! This example demonstrates how to add configurable color schemes to the file listing tool.
 
 use colored::*;
-use std::fs;
 
 /// Example color scheme structure
 #[derive(Clone)]

@@ -117,7 +117,7 @@ pub fn make_clickable_link(_file_name: &str, full_path: &Path, colored_name: &st
             if c == '/' || c == ':' {
                 c.to_string()
             } else {
-                percent_encode(&c.to_string().as_bytes(), NON_ALPHANUMERIC).to_string()
+                percent_encode(c.to_string().as_bytes(), NON_ALPHANUMERIC).to_string()
             }
         })
         .collect();
