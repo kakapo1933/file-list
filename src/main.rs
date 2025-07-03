@@ -37,42 +37,40 @@ mod display;
 mod file_info;
 mod formatting;
 
-use clap::{Arg, Command};
+use clap::Parser;
 use config::Config;
 
-fn main() {
-    let matches = Command::new("fls")
-        .version(env!("CARGO_PKG_VERSION"))
-        .about("Enhanced ls command with detailed permissions and table display")
-        .arg(
-            Arg::new("path")
-                .help("Directory path to list")
-                .default_value(".")
-                .index(1),
-        )
-        .arg(
-            Arg::new("long")
-                .short('l')
-                .long("long")
-                .help("Display detailed information in table format")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("all")
-                .short('a')
-                .long("all")
-                .help("Show hidden files")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("interactive")
-                .short('i')
-                .long("interactive")
-                .help("Enable clickable file names (requires terminal with OSC 8 support)")
-                .action(clap::ArgAction::SetTrue),
-        )
-        .get_matches();
+#[derive(Parser)]
+#[command(name = "fls")]
+#[command(version)]
+#[command(about = "Enhanced ls command with detailed permissions and table display")]
+struct Args {
+    /// Directory path to list
+    #[arg(default_value = ".")]
+    path: String,
 
-    let config = Config::from_matches(matches);
+    /// Show hidden files
+    #[arg(short = 'a', long = "all")]
+    all: bool,
+
+    /// Show detailed information in table format
+    #[arg(short = 'l', long = "long")]
+    long: bool,
+
+    /// Show clickable file names (requires terminal with OSC 8 support)
+    #[arg(short = 'i', long = "interactive")]
+    interactive: bool,
+}
+
+fn main() {
+    let args = Args::parse();
+
+    let config = Config {
+        path: args.path,
+        long_format: args.long,
+        show_hidden: args.all,
+        interactive: args.interactive,
+    };
+
     display::list_directory(&config);
 }
