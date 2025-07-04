@@ -21,6 +21,38 @@ const TREE_SPACE: &str = "    ";
 /// Maximum depth to prevent infinite recursion
 const MAX_DEPTH: usize = 20;
 
+/// Reads directory entries, filters hidden files, and sorts alphabetically.
+///
+/// # Arguments
+///
+/// * `path` - Path to the directory to read
+/// * `config` - Configuration for hidden file visibility
+///
+/// # Returns
+///
+/// A vector of sorted directory entries, or empty vector on error
+fn read_and_sort_entries(path: &Path, config: &Config) -> Vec<DirEntry> {
+    fs::read_dir(path)
+        .map(|entries| {
+            let mut valid_entries: Vec<_> = entries
+                .filter_map(|e| e.ok())
+                .filter(|entry| {
+                    config.show_hidden || !entry.file_name().to_string_lossy().starts_with('.')
+                })
+                .collect();
+
+            // Sort entries alphabetically
+            valid_entries.sort_by(|a, b| {
+                let a_name = a.file_name();
+                let b_name = b.file_name();
+                a_name.cmp(&b_name)
+            });
+
+            valid_entries
+        })
+        .unwrap_or_else(|_| Vec::new())
+}
+
 /// Displays directory contents in a tree-like structure.
 ///
 /// This function recursively traverses directories and displays them with visual tree branches.
@@ -37,21 +69,8 @@ pub fn display(_entries: &[IoResult<DirEntry>], config: &Config) {
     println!("{}", path.display().to_string().bright_blue().bold());
 
     // Start tree traversal from the root
-    if let Ok(entries) = fs::read_dir(path) {
-        let mut valid_entries: Vec<_> = entries
-            .filter_map(|e| e.ok())
-            .filter(|entry| {
-                config.show_hidden || !entry.file_name().to_string_lossy().starts_with('.')
-            })
-            .collect();
-
-        // Sort entries alphabetically
-        valid_entries.sort_by(|a, b| {
-            let a_name = a.file_name();
-            let b_name = b.file_name();
-            a_name.cmp(&b_name)
-        });
-
+    let valid_entries = read_and_sort_entries(path, config);
+    if !valid_entries.is_empty() {
         display_tree_recursive(&valid_entries, "", true, config, 0);
     }
 }
@@ -101,26 +120,10 @@ fn display_tree_recursive(
 
             // Recursively display subdirectories
             if file_info.is_directory() {
-                if let Ok(sub_entries) = fs::read_dir(entry.path()) {
-                    let mut sub_entries: Vec<_> = sub_entries
-                        .filter_map(|e| e.ok())
-                        .filter(|entry| {
-                            config.show_hidden
-                                || !entry.file_name().to_string_lossy().starts_with('.')
-                        })
-                        .collect();
-
-                    // Sort sub-entries alphabetically
-                    sub_entries.sort_by(|a, b| {
-                        let a_name = a.file_name();
-                        let b_name = b.file_name();
-                        a_name.cmp(&b_name)
-                    });
-
-                    if !sub_entries.is_empty() {
-                        let new_prefix = format!("{}{}", prefix, next_prefix);
-                        display_tree_recursive(&sub_entries, &new_prefix, false, config, depth + 1);
-                    }
+                let sub_entries = read_and_sort_entries(&entry.path(), config);
+                if !sub_entries.is_empty() {
+                    let new_prefix = format!("{}{}", prefix, next_prefix);
+                    display_tree_recursive(&sub_entries, &new_prefix, false, config, depth + 1);
                 }
             }
         } else {
