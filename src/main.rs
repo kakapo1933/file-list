@@ -27,6 +27,15 @@
 //! # Interactive mode with clickable files
 //! fls -i
 //!
+//! # Tree view of directory structure
+//! fls -t
+//!
+//! # Tree view with hidden files
+//! fls -ta
+//!
+//! # Interactive tree view
+//! fls -ti
+//!
 //! # All options combined
 //! fls -lai /path/to/directory
 //! ```
@@ -43,7 +52,7 @@ use config::Config;
 #[derive(Parser)]
 #[command(name = "fls")]
 #[command(version)]
-#[command(about = "Enhanced ls command with detailed permissions and table display")]
+#[command(about = "Enhanced ls command with detailed permissions, table display, and tree view")]
 struct Args {
     /// Directory path to list
     #[arg(default_value = ".")]
@@ -60,6 +69,10 @@ struct Args {
     /// Show clickable file names (requires terminal with OSC 8 support)
     #[arg(short = 'i', long = "interactive")]
     interactive: bool,
+
+    /// Display files in a tree-like structure
+    #[arg(short = 't', long = "tree")]
+    tree: bool,
 }
 
 fn main() {
@@ -70,6 +83,7 @@ fn main() {
         long_format: args.long,
         show_hidden: args.all,
         interactive: args.interactive,
+        tree: args.tree,
     };
 
     display::list_directory(&config);

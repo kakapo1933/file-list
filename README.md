@@ -1,6 +1,6 @@
 # File List (`fls`)
 
-An enhanced `ls` command-line tool written in Rust that provides human-readable file information with comprehensive permission details and visual formatting.
+An enhanced `ls` command-line tool written in Rust that provides human-readable file information with comprehensive permission details, visual formatting, and hierarchical tree view.
 
 ## Features
 
@@ -17,6 +17,7 @@ An enhanced `ls` command-line tool written in Rust that provides human-readable 
   - 🔴 Red (bold): > 1GB (very large files)
 - **Professional table formatting** with Unicode borders
 - **Perfect column alignment** regardless of filename length or special characters
+- **Hierarchical tree view** with Unicode tree drawing characters (├──, └──, │)
 
 ### 🖱️ **Interactive Features**
 - **Clickable file names** with OSC 8 terminal hyperlink support
@@ -37,6 +38,15 @@ An enhanced `ls` command-line tool written in Rust that provides human-readable 
 - **Formatted timestamps** for modification dates
 - **Real user and group names** (not just IDs)
 - **Comprehensive file type detection**
+
+### 🌲 **Tree View Features**
+- **Hierarchical directory visualization** similar to Unix `tree` command
+- **Unicode tree drawing characters** for clear structural representation
+- **Recursive subdirectory traversal** with depth limiting for safety
+- **Color-coded file types** in tree structure (directories, executables, hidden files)
+- **Interactive tree mode** with clickable file and directory links
+- **Hidden file support** in tree view with `-ta` flag combination
+- **Graceful error handling** for permission-denied directories
 
 ### 🚀 **Robust Edge Case Handling**
 - **Complex filenames**: Spaces, Unicode, special characters, very long names
@@ -83,6 +93,15 @@ fls -i
 # Interactive mode with table format
 fls -li
 
+# Tree view of directory structure
+fls -t
+
+# Tree view with hidden files
+fls -ta
+
+# Interactive tree view with clickable files
+fls -ti
+
 # All options combined
 fls -lai /path/to/directory
 ```
@@ -94,6 +113,7 @@ fls -lai /path/to/directory
 | `-l` | `-l` | `--long` | Display detailed information in table format with human-readable permissions |
 | `-a` | `-a` | `--all` | Show hidden files (files starting with `.`) |
 | `-i` | `-i` | `--interactive` | Enable clickable file names (requires terminal with OSC 8 support) |
+| `-t` | `-t` | `--tree` | Display files in a tree-like hierarchical structure |
 
 ## Examples
 
@@ -120,6 +140,48 @@ target
 ```
 
 Note: File sizes are color-coded in the terminal output - green for small files (<1MB), yellow for medium (1MB-100MB), magenta for large (100MB-1GB), and red for very large (>1GB).
+
+### Tree View Format (`-t`)
+```
+.
+├── Cargo.lock
+├── Cargo.toml
+├── README.md
+├── examples
+│   ├── custom_colors.rs
+│   ├── json_output.rs
+│   └── plugin_system.rs
+├── src
+│   ├── colors.rs
+│   ├── config.rs
+│   ├── display
+│   │   ├── mod.rs
+│   │   ├── simple.rs
+│   │   ├── table.rs
+│   │   └── tree.rs
+│   ├── file_info.rs
+│   ├── formatting.rs
+│   └── main.rs
+└── target
+    └── release
+        └── fls
+```
+
+### Tree View with Hidden Files (`-ta`)
+```
+project
+├── .gitignore
+├── .cargo
+│   └── config.toml
+├── src
+│   ├── .hidden_temp
+│   ├── main.rs
+│   └── lib.rs
+└── README.md
+```
+
+### Interactive Tree View (`-ti`)
+The tree view supports interactive mode where file and directory names become clickable hyperlinks that open with your system's default applications.
 
 ### Permission Examples Explained
 
@@ -164,7 +226,8 @@ src/
 └── display/
     ├── mod.rs        # Common display logic and entry point
     ├── simple.rs     # Simple format display implementation
-    └── table.rs      # Table format display with color application
+    ├── table.rs      # Table format display with color application
+    └── tree.rs       # Tree format display with recursive traversal
 ```
 
 ### Performance
@@ -201,18 +264,20 @@ src/
 - **Terminal.app** (macOS) - Limited support
 - **Other terminals** - Graceful fallback (hyperlinks ignored, colors preserved)
 
-## Comparison with Traditional `ls`
+## Comparison with Traditional `ls` and `tree`
 
-| Feature | `ls -la` | `fls -la` | `fls -lai` |
-|---------|----------|-------------------|-----------|
-| Permission format | `rwxr-xr-x` | `Read, Write, Execute` | `Read, Write, Execute` |
-| File type | First character | Dedicated "Type" column | Dedicated "Type" column |
-| Ownership | `user group` | `user/group (Owner)` | `user/group (Owner)` |
-| Visual layout | Plain text | Professional table | Professional table |
-| Color coding | Basic | Enhanced with alignment | Enhanced with alignment |
-| Interactive files | ❌ None | ❌ None | ✅ Clickable hyperlinks |
-| File opening | Manual copy/paste | Manual copy/paste | ✅ One-click opening |
-| Learning curve | Requires Unix knowledge | Self-explanatory | Self-explanatory |
+| Feature | `ls -la` | `tree` | `fls -la` | `fls -t` | `fls -tai` |
+|---------|----------|--------|-----------|----------|------------|
+| Permission format | `rwxr-xr-x` | ❌ None | `Read, Write, Execute` | ❌ None | ❌ None |
+| File type | First character | Basic | Dedicated "Type" column | Color-coded | Color-coded |
+| Ownership | `user group` | ❌ None | `user/group (Owner)` | ❌ None | ❌ None |
+| Visual layout | Plain text | Tree structure | Professional table | Tree structure | Tree structure |
+| Color coding | Basic | Basic | Enhanced with alignment | Enhanced colors | Enhanced colors |
+| Interactive files | ❌ None | ❌ None | ❌ None | ❌ None | ✅ Clickable hyperlinks |
+| File opening | Manual copy/paste | Manual copy/paste | Manual copy/paste | Manual copy/paste | ✅ One-click opening |
+| Hierarchical view | ❌ None | ✅ Tree only | ❌ None | ✅ Tree with colors | ✅ Tree with colors |
+| Hidden files | With `-a` | With `-a` | With `-a` | With `-a` | With `-a` |
+| Learning curve | Requires Unix knowledge | Simple | Self-explanatory | Intuitive | Intuitive |
 
 ## License
 

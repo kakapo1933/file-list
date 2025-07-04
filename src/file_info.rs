@@ -5,6 +5,7 @@
 //! FileInfo struct used for table display.
 
 use std::fs;
+use std::path::Path;
 use std::os::unix::fs::{MetadataExt, PermissionsExt};
 use tabled::Tabled;
 use users::{get_group_by_gid, get_user_by_uid};
@@ -60,6 +61,69 @@ impl FileInfo {
             owner: get_owner_info(metadata),
             size: format_size(metadata.len()),
             modified: format_time(metadata),
+        }
+    }
+
+    /// Creates a new FileInfo instance from a file path.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file
+    ///
+    /// # Returns
+    ///
+    /// A Result containing the FileInfo instance or an error if the file cannot be accessed.
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, std::io::Error> {
+        let path = path.as_ref();
+        let metadata = fs::metadata(path)?;
+        let name = path.file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_string();
+        
+        Ok(Self::from_metadata(name, &metadata))
+    }
+
+    /// Checks if this file is a directory.
+    ///
+    /// # Returns
+    ///
+    /// `true` if the file is a directory, `false` otherwise.
+    pub fn is_directory(&self) -> bool {
+        self.file_type == "Directory"
+    }
+
+    /// Checks if this file is executable.
+    ///
+    /// # Returns
+    ///
+    /// `true` if the file is executable, `false` otherwise.
+    pub fn is_executable(&self) -> bool {
+        self.file_type == "Executable"
+    }
+
+    /// Checks if this file is hidden (starts with a dot).
+    ///
+    /// # Returns
+    ///
+    /// `true` if the file is hidden, `false` otherwise.
+    pub fn is_hidden(&self) -> bool {
+        self.name.starts_with('.')
+    }
+}
+
+impl Default for FileInfo {
+    fn default() -> Self {
+        Self {
+            name: "".to_string(),
+            file_type: "File".to_string(),
+            user_perms: "None".to_string(),
+            group_perms: "None".to_string(),
+            other_perms: "None".to_string(),
+            octal: "000".to_string(),
+            owner: "unknown/unknown".to_string(),
+            size: "0B".to_string(),
+            modified: "Unknown".to_string(),
         }
     }
 }

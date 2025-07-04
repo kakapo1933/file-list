@@ -17,6 +17,8 @@ pub struct Config {
     pub show_hidden: bool,
     /// Whether to enable clickable file names using terminal hyperlinks
     pub interactive: bool,
+    /// Whether to display files in a tree-like structure
+    pub tree: bool,
 }
 
 impl Config {
@@ -35,6 +37,7 @@ impl Config {
             long_format: matches.get_flag("long"),
             show_hidden: matches.get_flag("all"),
             interactive: matches.get_flag("interactive"),
+            tree: matches.get_flag("tree"),
         }
     }
 }

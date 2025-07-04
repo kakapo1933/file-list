@@ -5,6 +5,7 @@
 
 pub mod simple;
 pub mod table;
+pub mod tree;
 
 use std::fs;
 use colored::*;
@@ -40,7 +41,9 @@ pub fn list_directory(config: &Config) {
         a_name.cmp(&b_name)
     });
 
-    if config.long_format {
+    if config.tree {
+        tree::display(&entries, config);
+    } else if config.long_format {
         table::display(&entries, config);
     } else {
         simple::display(&entries, config);

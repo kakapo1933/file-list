@@ -9,7 +9,7 @@ use percent_encoding::{percent_encode, NON_ALPHANUMERIC};
 use std::fs;
 use std::path::Path;
 
-use crate::file_info::is_executable;
+use crate::file_info::{is_executable, FileInfo};
 
 /// Applies color formatting to a file name based on its type and attributes.
 ///
@@ -126,4 +126,38 @@ pub fn make_clickable_link(_file_name: &str, full_path: &Path, colored_name: &st
     
     // OSC 8 escape sequence: \x1b]8;;URL\x1b\\TEXT\x1b]8;;\x1b\\
     format!("\x1b]8;;{}\x1b\\{}\x1b]8;;\x1b\\", file_url, colored_name)
+}
+
+/// Formats a file name with color and optional interactive hyperlink using FileInfo.
+///
+/// This function is specifically designed to work with FileInfo structs and provides
+/// consistent color formatting across different display modes.
+///
+/// # Arguments
+///
+/// * `file_name` - The name of the file
+/// * `file_info` - The FileInfo struct containing file metadata
+/// * `interactive` - Whether to add interactive hyperlinks
+///
+/// # Returns
+///
+/// A formatted string with colors and optional hyperlinks
+pub fn format_with_color(file_name: &str, file_info: &FileInfo, interactive: bool) -> String {
+    let colored_name = if file_info.is_hidden() {
+        format!("{}", file_name.bright_black())
+    } else if file_info.is_directory() {
+        format!("{}", file_name.blue().bold())
+    } else if file_info.is_executable() {
+        format!("{}", file_name.green().bold())
+    } else {
+        file_name.to_string()
+    };
+
+    if interactive {
+        let current_dir = std::env::current_dir().unwrap_or_default();
+        let full_path = current_dir.join(file_name);
+        make_clickable_link(file_name, &full_path, &colored_name)
+    } else {
+        colored_name
+    }
 }
