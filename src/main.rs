@@ -36,6 +36,12 @@
 //! # Interactive tree view
 //! fls -ti
 //!
+//! # Tree view with depth limit
+//! fls -t -L 2
+//!
+//! # Tree view with depth limit and hidden files
+//! fls -ta --depth 3
+//!
 //! # All options combined
 //! fls -lai /path/to/directory
 //! ```
@@ -73,6 +79,10 @@ struct Args {
     /// Display files in a tree-like structure
     #[arg(short = 't', long = "tree")]
     tree: bool,
+
+    /// Limit tree depth to specified number of levels (like tree -L)
+    #[arg(short = 'L', long = "depth", value_name = "DEPTH", value_parser = clap::value_parser!(u8).range(1..=50))]
+    depth: Option<u8>,
 }
 
 fn main() {
@@ -84,6 +94,7 @@ fn main() {
         show_hidden: args.all,
         interactive: args.interactive,
         tree: args.tree,
+        tree_depth: args.depth.map(|d| d as usize),
     };
 
     display::list_directory(&config);

@@ -1,5 +1,8 @@
 # File List (`fls`)
 
+[![Version](https://img.shields.io/badge/version-0.4.1-blue.svg)](CHANGELOG.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 An enhanced `ls` command-line tool written in Rust that provides human-readable file information with comprehensive permission details, visual formatting, and hierarchical tree view.
 
 ## Features
@@ -42,7 +45,7 @@ An enhanced `ls` command-line tool written in Rust that provides human-readable 
 ### 🌲 **Tree View Features**
 - **Hierarchical directory visualization** similar to Unix `tree` command
 - **Unicode tree drawing characters** for clear structural representation
-- **Recursive subdirectory traversal** with depth limiting for safety
+- **Recursive subdirectory traversal** with configurable depth limiting (1-50 levels)
 - **Color-coded file types** in tree structure (directories, executables, hidden files)
 - **Interactive tree mode** with clickable file and directory links
 - **Hidden file support** in tree view with `-ta` flag combination
@@ -102,6 +105,12 @@ fls -ta
 # Interactive tree view with clickable files
 fls -ti
 
+# Tree view with depth limit
+fls -t -L 2
+
+# Tree view with depth limit and hidden files
+fls -ta --depth 3
+
 # All options combined
 fls -lai /path/to/directory
 ```
@@ -114,6 +123,7 @@ fls -lai /path/to/directory
 | `-a` | `-a` | `--all` | Show hidden files (files starting with `.`) |
 | `-i` | `-i` | `--interactive` | Enable clickable file names (requires terminal with OSC 8 support) |
 | `-t` | `-t` | `--tree` | Display files in a tree-like hierarchical structure |
+| `-L` | `-L` | `--depth` | Limit tree depth to specified number of levels (1-50) |
 
 ## Examples
 
@@ -178,6 +188,25 @@ project
 │   ├── main.rs
 │   └── lib.rs
 └── README.md
+```
+
+### Tree View with Depth Limit (`-t -L 2`)
+```
+.
+├── Cargo.lock
+├── Cargo.toml
+├── README.md
+├── examples
+│   ├── custom_colors.rs
+│   ├── json_output.rs
+│   └── plugin_system.rs
+└── src
+    ├── colors.rs
+    ├── config.rs
+    ├── display
+    ├── file_info.rs
+    ├── formatting.rs
+    └── main.rs
 ```
 
 ### Interactive Tree View (`-ti`)
@@ -287,6 +316,7 @@ This project is available under the MIT License.
 
 The modular architecture makes it easy to extend `fls` with new features. See the `examples/` directory for detailed examples:
 
+- **`tree_display.rs`**: Tree display features and depth control examples
 - **`json_output.rs`**: Adding JSON output format
 - **`custom_colors.rs`**: Implementing configurable color schemes  
 - **`plugin_system.rs`**: Creating a plugin system for custom file information

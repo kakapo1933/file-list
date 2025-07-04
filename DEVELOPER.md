@@ -16,7 +16,8 @@ src/
 └── display/
     ├── mod.rs        # Common display logic and entry point
     ├── simple.rs     # Simple format display implementation
-    └── table.rs      # Table format display with color application
+    ├── table.rs      # Table format display with color application
+    └── tree.rs       # Tree format display with recursive traversal
 ```
 
 ### Key Design Principles
@@ -36,22 +37,26 @@ main.rs
     ├── display/simple.rs
     │   └── colors.rs
     │       └── file_info.rs
-    └── display/table.rs
+    ├── display/table.rs
+    │   ├── colors.rs
+    │   ├── file_info.rs
+    │   │   └── formatting.rs
+    │   └── formatting.rs
+    └── display/tree.rs
         ├── colors.rs
-        ├── file_info.rs
-        │   └── formatting.rs
-        └── formatting.rs
+        └── file_info.rs
 ```
 
 ## Data Flow
 
 1. **CLI Parsing**: `main.rs` parses command-line arguments using clap
-2. **Configuration**: Arguments are converted to a `Config` struct
+2. **Configuration**: Arguments are converted to a `Config` struct (including `tree_depth`)
 3. **Directory Reading**: `display::list_directory()` reads and sorts directory entries
-4. **Format Selection**: Based on config, either simple or table display is chosen
-5. **Information Extraction**: File metadata is extracted and formatted
-6. **Color Application**: Colors and hyperlinks are applied based on file types
-7. **Output Generation**: Final formatted output is printed to stdout
+4. **Display Routing**: Based on flags (`-t` for tree, `-l` for table), appropriate display module is called
+5. **Format Selection**: Tree, table, or simple display is chosen based on config
+6. **Information Extraction**: File metadata is extracted and formatted
+7. **Color Application**: Colors and hyperlinks are applied based on file types
+8. **Output Generation**: Final formatted output is printed to stdout
 
 ## Adding New Features
 
@@ -70,6 +75,24 @@ main.rs
 2. Update the `from_metadata()` method to populate the new fields
 3. Add any necessary formatting functions to `formatting.rs`
 4. Update table display to include the new columns
+
+### Tree Display Implementation
+
+The tree display module (`src/display/tree.rs`) implements hierarchical directory visualization:
+
+1. **Recursive Traversal**: Uses `display_tree_recursive()` for depth-first traversal
+2. **Depth Control**: Respects user-specified depth limits (`-L/--depth` flag)
+3. **Unicode Drawing**: Uses box-drawing characters (├──, └──, │) for tree structure
+4. **Safety Limits**: Enforces MAX_DEPTH (20) to prevent stack overflow
+5. **Hidden Files**: Respects `--all` flag configuration
+6. **Color Integration**: Uses `format_with_color()` for consistent file coloring
+7. **Interactive Support**: Works with `-i` flag for clickable file names
+
+Key implementation details:
+- Depth validation: 1-50 levels (enforced at CLI parsing)
+- Default behavior: Unlimited depth (up to MAX_DEPTH)
+- Tree symbols adapt based on position (last item gets └── instead of ├──)
+- Recursive calls track depth to enforce limits
 
 ### Adding New Color Schemes
 

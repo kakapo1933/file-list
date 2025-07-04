@@ -19,6 +19,8 @@ pub struct Config {
     pub interactive: bool,
     /// Whether to display files in a tree-like structure
     pub tree: bool,
+    /// Maximum depth for tree traversal (None = unlimited)
+    pub tree_depth: Option<usize>,
 }
 
 impl Config {
@@ -38,6 +40,7 @@ impl Config {
             show_hidden: matches.get_flag("all"),
             interactive: matches.get_flag("interactive"),
             tree: matches.get_flag("tree"),
+            tree_depth: matches.get_one::<u8>("depth").map(|&d| d as usize),
         }
     }
 }
