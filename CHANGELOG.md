@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2024-07-14
+
+### Added
+- **Items column** in table format (`-l`) showing directory item counts
+- Directory item counting functionality that excludes `.` and `..` navigation entries
+- Proper error handling for directories that cannot be read (shows "?" for permission errors)
+
+### Changed
+- Enhanced table format to include the new "Items" column as the rightmost column
+- Updated FileInfo struct with `item_count` field
+- Added `from_metadata_with_path()` method for better path handling in table display
+
+### Technical Details
+- Uses `fs::read_dir()` for efficient directory scanning
+- Graceful error handling for permission-denied directories
+- Excludes navigation entries (`.` and `..`) for more intuitive counts
+- Maintains backward compatibility with all existing functionality
+
 ## [0.4.1] - 2024-01-07
 
 ### Added

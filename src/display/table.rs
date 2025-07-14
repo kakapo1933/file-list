@@ -50,7 +50,7 @@ pub fn display(entries: &[Result<fs::DirEntry, std::io::Error>], config: &Config
             Err(_) => continue,
         };
 
-        let file_info = FileInfo::from_metadata(file_name_str.to_string(), &metadata);
+        let file_info = FileInfo::from_metadata_with_path(file_name_str.to_string(), &metadata, &entry.path());
         file_infos.push(file_info);
     }
 

@@ -71,10 +71,17 @@ main.rs
 
 ### Adding New File Information
 
-1. Add new fields to the `FileInfo` struct in `file_info.rs`
-2. Update the `from_metadata()` method to populate the new fields
-3. Add any necessary formatting functions to `formatting.rs`
-4. Update table display to include the new columns
+1. Add new fields to the `FileInfo` struct in `file_info.rs` (with `#[tabled(rename = "Column Name")]` attribute)
+2. Update the `from_metadata()` and `from_metadata_with_path()` methods to populate the new fields
+3. Update the `Default` implementation to include the new fields
+4. Add any necessary formatting functions to `formatting.rs`
+5. Update table display if special handling is needed (colors, formatting, etc.)
+
+**Example**: The "Items" column was added by:
+- Adding `item_count: String` field to `FileInfo` struct
+- Implementing `count_directory_items_by_path()` helper function
+- Using `from_metadata_with_path()` for table display to access full directory paths
+- The `tabled` crate automatically includes the new column in table output
 
 ### Tree Display Implementation
 

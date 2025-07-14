@@ -37,6 +37,8 @@ pub struct FileInfo {
     pub size: String,
     #[tabled(rename = "Modified")]
     pub modified: String,
+    #[tabled(rename = "Items")]
+    pub item_count: String,
 }
 
 impl FileInfo {
@@ -52,6 +54,36 @@ impl FileInfo {
     /// A new FileInfo instance with all fields populated from the metadata.
     pub fn from_metadata(name: String, metadata: &fs::Metadata) -> Self {
         Self {
+            name: name.clone(),
+            file_type: get_file_type(metadata),
+            user_perms: get_user_permissions(metadata),
+            group_perms: get_group_permissions(metadata),
+            other_perms: get_other_permissions(metadata),
+            octal: format_octal_permissions(metadata),
+            owner: get_owner_info(metadata),
+            size: format_size(metadata.len()),
+            modified: format_time(metadata),
+            item_count: if metadata.is_dir() {
+                count_directory_items(&name).unwrap_or_else(|_| "?".to_string())
+            } else {
+                "-".to_string()
+            },
+        }
+    }
+
+    /// Creates a new FileInfo instance from file metadata with full path support.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the file
+    /// * `metadata` - The file's metadata from the filesystem
+    /// * `path` - The full path to the file
+    ///
+    /// # Returns
+    ///
+    /// A new FileInfo instance with all fields populated from the metadata.
+    pub fn from_metadata_with_path<P: AsRef<Path>>(name: String, metadata: &fs::Metadata, path: P) -> Self {
+        Self {
             name,
             file_type: get_file_type(metadata),
             user_perms: get_user_permissions(metadata),
@@ -61,6 +93,11 @@ impl FileInfo {
             owner: get_owner_info(metadata),
             size: format_size(metadata.len()),
             modified: format_time(metadata),
+            item_count: if metadata.is_dir() {
+                count_directory_items_by_path(path.as_ref()).unwrap_or_else(|_| "?".to_string())
+            } else {
+                "-".to_string()
+            },
         }
     }
 
@@ -81,7 +118,24 @@ impl FileInfo {
             .unwrap_or("")
             .to_string();
         
-        Ok(Self::from_metadata(name, &metadata))
+        let item_count = if metadata.is_dir() {
+            count_directory_items_by_path(path).unwrap_or_else(|_| "?".to_string())
+        } else {
+            "-".to_string()
+        };
+        
+        Ok(Self {
+            name,
+            file_type: get_file_type(&metadata),
+            user_perms: get_user_permissions(&metadata),
+            group_perms: get_group_permissions(&metadata),
+            other_perms: get_other_permissions(&metadata),
+            octal: format_octal_permissions(&metadata),
+            owner: get_owner_info(&metadata),
+            size: format_size(metadata.len()),
+            modified: format_time(&metadata),
+            item_count,
+        })
     }
 
     /// Checks if this file is a directory.
@@ -124,6 +178,7 @@ impl Default for FileInfo {
             owner: "unknown/unknown".to_string(),
             size: "0B".to_string(),
             modified: "Unknown".to_string(),
+            item_count: "-".to_string(),
         }
     }
 }
@@ -222,4 +277,32 @@ fn get_owner_info(metadata: &fs::Metadata) -> String {
         .unwrap_or_else(|| gid.to_string());
 
     format!("{}/{}", user_name, group_name)
+}
+
+/// Counts the number of items in a directory by name.
+///
+/// # Arguments
+///
+/// * `dir_name` - The name of the directory to count items in
+///
+/// # Returns
+///
+/// A Result containing the count as a string, or an error if the directory cannot be read.
+fn count_directory_items(dir_name: &str) -> Result<String, std::io::Error> {
+    let count = fs::read_dir(dir_name)?.count();
+    Ok(count.to_string())
+}
+
+/// Counts the number of items in a directory by path.
+///
+/// # Arguments
+///
+/// * `path` - The path to the directory to count items in
+///
+/// # Returns
+///
+/// A Result containing the count as a string, or an error if the directory cannot be read.
+fn count_directory_items_by_path(path: &Path) -> Result<String, std::io::Error> {
+    let count = fs::read_dir(path)?.count();
+    Ok(count.to_string())
 }
